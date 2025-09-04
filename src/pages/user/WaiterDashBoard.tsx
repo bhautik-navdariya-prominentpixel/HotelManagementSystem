@@ -3,7 +3,7 @@ import { getAllMenu } from "../../util/menu-util";
 import type { MenuModel } from "../../models/MenuModel";
 import { useSelector } from "react-redux";
 import type { StoreType } from "../../store";
-import { getCartOfTable, saveOrder } from "../../util/order-util";
+import { saveOrder } from "../../util/order-util";
 import { OrderModel } from "../../models/OrderModel";
 import type { TableCartModel } from "../../models/TableCartModel";
 import { getTableSize } from "../../util/table-util";
@@ -12,7 +12,7 @@ const WaiterDashBoard = () => {
   const tables: TableCartModel[] = Array.from({ length: getTableSize() }, (_, i) => ({
     id: `T${String(i + 1).padStart(2, "0")}`,
     name: `Table ${String(i + 1).padStart(2, "0")}`,
-    cart: getCartOfTable(`Table ${String(i + 1).padStart(2, "0")}`),
+    cart: [],
   }));
 
   const [selectedTable, setSelectedTable] = useState<TableCartModel[]>(tables);
@@ -131,8 +131,8 @@ const WaiterDashBoard = () => {
       printWindow.print();
       printWindow.close();
     }
-
-    // setCart([]);
+    selectedTable[selectedTableIndex].cart = [];
+    setSelectedTable([...selectedTable]);
     setSelectedTableIndex(-1);
     alert("Order saved and receipt printed!");
   };
