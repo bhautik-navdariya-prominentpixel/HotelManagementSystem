@@ -43,7 +43,7 @@ const Header = (props: { type: "ADMIN" | "WAITER" }) => {
               <span className='text-sm text-gray-600'>Welcome, {user.fullname}</span>
               <button
                 onClick={handleLogout}
-                className='bg-red-600 text-white px-4 py-2 rounded-md text-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500'
+                className='bg-red-600 text-white px-4 py-2 rounded-md text-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 cursor-pointer'
               >
                 Logout
               </button>

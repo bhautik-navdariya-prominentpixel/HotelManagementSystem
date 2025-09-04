@@ -6,10 +6,14 @@ import type { StoreType } from "../../store";
 import { useNavigate } from "react-router-dom";
 import { addMenu, deleteMenu, getAllMenu, updateMenu } from "../../util/menu-util";
 import Header from "../../components/Header";
+import {
+  getTableSize,
+  updateTableSize as updateTableSizeToLocalStorage,
+} from "../../util/table-util";
 
 export const AdminDashboard = () => {
   const [menus, setMenus] = useState<MenuModel[]>(getAllMenu());
-
+  const [tableSize, setTableSize] = useState<number>(getTableSize());
   const [editingMenu, setEditingMenu] = useState<MenuModel | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const user = useSelector((store: StoreType) => store.auth);
@@ -53,88 +57,117 @@ export const AdminDashboard = () => {
   const filteredMenus = menus.filter((menu) =>
     menu.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const updateTableSize = (size: number) => {
+    if (tableSize === 0 && size < 0) return;
+    updateTableSizeToLocalStorage(size);
+    setTableSize((prev) => prev + size);
+  };
+
   useEffect(() => {
     if (!user.login || !user.user.isAdmin) {
       navigate("/");
     }
   }, []);
+
   return (
     <div className='min-h-screen bg-gray-50'>
       {/* Header */}
       <Header type='ADMIN' />
 
       <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8'>
-        {/* Menu Form */}
-        <div className='bg-white rounded-lg shadow-md p-6 mb-8'>
-          <h2 className='text-lg font-semibold text-gray-900 mb-6'>
-            {editingMenu ? "Edit Menu Item" : "Add New Menu Item"}
-          </h2>
+        <div className='grid grid-cols-1 md:grid-cols-12 gap-2'>
+          <div className='bg-white rounded-lg shadow-md p-6 mb-8 col-span-10'>
+            <h2 className='text-lg font-semibold text-gray-900 mb-6'>
+              {editingMenu ? "Edit Menu Item" : "Add New Menu Item"}
+            </h2>
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-4 col-span-10'>
+              <div>
+                <label htmlFor='name' className='block text-sm font-medium text-gray-700 mb-2'>
+                  Menu Name
+                </label>
+                <input
+                  id='name'
+                  type='text'
+                  {...menuFormik.getFieldProps("name")}
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    menuFormik.touched.name && menuFormik.errors.name
+                      ? "border-red-500"
+                      : "border-gray-300"
+                  }`}
+                  placeholder='Enter menu name'
+                />
+                {menuFormik.touched.name && menuFormik.errors.name && (
+                  <p className='mt-1 text-sm text-red-600'>{menuFormik.errors.name}</p>
+                )}
+              </div>
 
-          <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
-            <div>
-              <label htmlFor='name' className='block text-sm font-medium text-gray-700 mb-2'>
-                Menu Name
-              </label>
-              <input
-                id='name'
-                type='text'
-                {...menuFormik.getFieldProps("name")}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  menuFormik.touched.name && menuFormik.errors.name
-                    ? "border-red-500"
-                    : "border-gray-300"
-                }`}
-                placeholder='Enter menu name'
-              />
-              {menuFormik.touched.name && menuFormik.errors.name && (
-                <p className='mt-1 text-sm text-red-600'>{menuFormik.errors.name}</p>
-              )}
-            </div>
-
-            <div>
-              <label htmlFor='price' className='block text-sm font-medium text-gray-700 mb-2'>
-                Price ($)
-              </label>
-              <input
-                id='price'
-                type='number'
-                step='0.01'
-                {...menuFormik.getFieldProps("price")}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  menuFormik.touched.price && menuFormik.errors.price
-                    ? "border-red-500"
-                    : "border-gray-300"
-                }`}
-                placeholder='Enter price'
-              />
-              {menuFormik.touched.price && menuFormik.errors.price && (
-                <p className='mt-1 text-sm text-red-600'>{menuFormik.errors.price}</p>
-              )}
-            </div>
-
-            <div className='flex items-end space-x-2'>
-              <button
-                type='button'
-                onClick={(e) => {
-                  e.preventDefault();
-                  menuFormik.handleSubmit();
-                }}
-                className='bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500'
-              >
-                {editingMenu ? "Update" : "Add Menu"}
-              </button>
-              {editingMenu && (
+              <div>
+                <label htmlFor='price' className='block text-sm font-medium text-gray-700 mb-2'>
+                  Price ($)
+                </label>
+                <input
+                  id='price'
+                  type='number'
+                  step='0.01'
+                  {...menuFormik.getFieldProps("price")}
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    menuFormik.touched.price && menuFormik.errors.price
+                      ? "border-red-500"
+                      : "border-gray-300"
+                  }`}
+                  placeholder='Enter price'
+                />
+                {menuFormik.touched.price && menuFormik.errors.price && (
+                  <p className='mt-1 text-sm text-red-600'>{menuFormik.errors.price}</p>
+                )}
+              </div>
+              <br />
+              <div className='flex items-center gap-2 flex-row-reverse'>
                 <button
                   type='button'
-                  onClick={handleCancelEdit}
-                  className='bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500'
+                  onClick={(e) => {
+                    e.preventDefault();
+                    menuFormik.handleSubmit();
+                  }}
+                  className='bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer'
                 >
-                  Cancel
+                  {editingMenu ? "Update" : "Add Menu"}
                 </button>
-              )}
+                {editingMenu && (
+                  <button
+                    type='button'
+                    onClick={handleCancelEdit}
+                    className='bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 cursor-pointer'
+                  >
+                    Cancel
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+          <div className='col-span-2 bg-white rounded-lg shadow-md p-6 mb-8 flex flex-col items-center justify-center gap-2'>
+            <h2 className='text-lg font-semibold text-gray-900 mb-6'>Table Size</h2>
+            <div className='flex items-center space-x-3'>
+              <div className='flex items-center space-x-2'>
+                <button
+                  onClick={() => updateTableSize(-1)}
+                  className='w-8 h-8 bg-gray-200 text-gray-700 rounded-full hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 cursor-pointer'
+                >
+                  -
+                </button>
+                <span className='w-8 text-center font-medium'>{tableSize}</span>
+                <button
+                  onClick={() => updateTableSize(1)}
+                  className='w-8 h-8 bg-gray-200 text-gray-700 rounded-full hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 cursor-pointer'
+                >
+                  +
+                </button>
+              </div>
             </div>
           </div>
         </div>
+        {/* Menu Form */}
 
         {/* Menu Table */}
         <div className='bg-white rounded-lg shadow-md p-6'>
@@ -187,14 +220,14 @@ export const AdminDashboard = () => {
                       <td className='px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2'>
                         <button
                           onClick={() => handleEdit(menu)}
-                          className='text-blue-600 hover:text-blue-900 font-medium'
+                          className='text-blue-600 hover:text-blue-900 font-medium cursor-pointer'
                         >
                           Edit
                         </button>
                         <button
                           disabled={!!editingMenu}
                           onClick={() => handleDelete(menu.id)}
-                          className='text-red-600 hover:text-red-900 font-medium disabled:opacity-50 disabled:cursor-not-allowed'
+                          className='text-red-600 hover:text-red-900 font-medium disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer'
                         >
                           Delete
                         </button>

@@ -6,14 +6,15 @@ import type { StoreType } from "../../store";
 import { getCartOfTable, saveOrder } from "../../util/order-util";
 import { OrderModel } from "../../models/OrderModel";
 import type { TableCartModel } from "../../models/TableCartModel";
-
-const tables: TableCartModel[] = Array.from({ length: 10 }, (_, i) => ({
-  id: `T${String(i + 1).padStart(2, "0")}`,
-  name: `Table ${String(i + 1).padStart(2, "0")}`,
-  cart: getCartOfTable(`Table ${String(i + 1).padStart(2, "0")}`),
-}));
+import { getTableSize } from "../../util/table-util";
 
 const WaiterDashBoard = () => {
+  const tables: TableCartModel[] = Array.from({ length: getTableSize() }, (_, i) => ({
+    id: `T${String(i + 1).padStart(2, "0")}`,
+    name: `Table ${String(i + 1).padStart(2, "0")}`,
+    cart: getCartOfTable(`Table ${String(i + 1).padStart(2, "0")}`),
+  }));
+
   const [selectedTable, setSelectedTable] = useState<TableCartModel[]>(tables);
   const [selectedTableIndex, setSelectedTableIndex] = useState<number>(-1);
   const [searchTerm, setSearchTerm] = useState("");
@@ -31,23 +32,28 @@ const WaiterDashBoard = () => {
   const addToCart = (menu: MenuModel) => {
     const existingItem = selectedTable[selectedTableIndex].cart.find((item) => item.id === menu.id);
     if (existingItem) {
-      selectedTable[selectedTableIndex].cart = selectedTable[selectedTableIndex].cart.map((item) => (item.id === menu.id ? { ...item, quantity: item.quantity + 1 } : item))
+      selectedTable[selectedTableIndex].cart = selectedTable[selectedTableIndex].cart.map((item) =>
+        item.id === menu.id ? { ...item, quantity: item.quantity + 1 } : item
+      );
       setSelectedTable([...selectedTable]);
     } else {
-      selectedTable[selectedTableIndex].cart = [...selectedTable[selectedTableIndex].cart, { ...menu, quantity: 1 }]
+      selectedTable[selectedTableIndex].cart = [
+        ...selectedTable[selectedTableIndex].cart,
+        { ...menu, quantity: 1 },
+      ];
       // setCart((prev) => [...prev, { ...menu, quantity: 1 }]);
-      setSelectedTable([...selectedTable])
+      setSelectedTable([...selectedTable]);
     }
   };
 
   const updateQuantity = (menuId: string, change: number) => {
     const index = selectedTable[selectedTableIndex].cart.findIndex((item) => item.id === menuId);
     if (index > -1) {
-        selectedTable[selectedTableIndex].cart[index].quantity += change;
-        if (selectedTable[selectedTableIndex].cart[index].quantity === 0) {
-          selectedTable[selectedTableIndex].cart.splice(index, 1);
-        }
+      selectedTable[selectedTableIndex].cart[index].quantity += change;
+      if (selectedTable[selectedTableIndex].cart[index].quantity === 0) {
+        selectedTable[selectedTableIndex].cart.splice(index, 1);
       }
+    }
     setSelectedTable([...selectedTable]);
     // setSelectedTable((prev: CartModel[]) => {
     //   const index = prev.findIndex((item) => item.id === menuId);
@@ -69,7 +75,10 @@ const WaiterDashBoard = () => {
   };
 
   const getTotalAmount = () => {
-    return selectedTable[selectedTableIndex].cart.reduce((total, item) => total + item.price * item.quantity, 0);
+    return selectedTable[selectedTableIndex].cart.reduce(
+      (total, item) => total + item.price * item.quantity,
+      0
+    );
   };
 
   const handleSaveAndPrint = () => {
@@ -91,28 +100,34 @@ const WaiterDashBoard = () => {
     saveOrder(order);
 
     const printContent = `
-      RESTAURANT RECEIPT
-      ==================
-      Table: ${selectedTable}
-      Waiter: ${user.fullname}
-      Date: ${new Date().toLocaleDateString()}
-      Time: ${new Date().toLocaleTimeString()}
+      <div style="display: flex; justify-content:center;">
+        <pre>
+          RESTAURANT RECEIPT
+          ==================
+          Table: ${selectedTable[selectedTableIndex].name}
+          Waiter: ${user.fullname}
+          Date: ${new Date().toLocaleDateString()}
+          Time: ${new Date().toLocaleTimeString()}
 
-      ITEMS:
-      \t${selectedTable[selectedTableIndex].cart
-        .map(
-          (item) => `${item.name} x ${item.quantity} = ${(item.price * item.quantity).toFixed(2)}`
-        )
-        .join("\n\t")}
+          ITEMS:
+          \t${selectedTable[selectedTableIndex].cart
+            .map(
+              (item) =>
+                `${item.name} x ${item.quantity} = ${(item.price * item.quantity).toFixed(2)}`
+            )
+            .join("\n\t")}
 
-      TOTAL: ${getTotalAmount().toFixed(2)}
+          TOTAL: ${getTotalAmount().toFixed(2)}
 
-      Thank you for your visit!
+          Thank you for your visit!
+        </pre>
+      </div>
     `;
 
     const printWindow = window.open("", "_blank");
     if (printWindow) {
       printWindow.document.write(`<pre>${printContent}</pre>`);
+      printWindow.document.title = "Restorent Recipt";
       printWindow.print();
       printWindow.close();
     }
@@ -127,7 +142,7 @@ const WaiterDashBoard = () => {
     const tableName = target.value;
     let index = tables.findIndex((tbl) => tbl.id === tableName);
     console.log(index);
-    
+
     setSelectedTableIndex(index);
   };
 
@@ -166,6 +181,9 @@ const WaiterDashBoard = () => {
               />
 
               <div className='space-y-3'>
+                {filteredMenus.length === 0 && (
+                  <div className='flex justify-center p-2 text-slate-700'>No Item Found!</div>
+                )}
                 {filteredMenus.map((menu) => (
                   <div
                     key={menu.id}
@@ -177,8 +195,8 @@ const WaiterDashBoard = () => {
                     </div>
                     <button
                       onClick={() => addToCart(menu)}
-                      disabled={!selectedTable}
-                      className='bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed'
+                      disabled={selectedTableIndex == -1}
+                      className='bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer'
                     >
                       Add
                     </button>
@@ -197,7 +215,7 @@ const WaiterDashBoard = () => {
                 : "No Table Selected"}
             </h2>
 
-            {(selectedTableIndex === -1 || selectedTable[selectedTableIndex].cart.length === 0) ? (
+            {selectedTableIndex === -1 || selectedTable[selectedTableIndex].cart.length === 0 ? (
               <p className='text-gray-500 text-center py-8'>No items in cart</p>
             ) : (
               <div className='space-y-4'>
@@ -214,14 +232,14 @@ const WaiterDashBoard = () => {
                       <div className='flex items-center space-x-2'>
                         <button
                           onClick={() => updateQuantity(item.id, -1)}
-                          className='w-8 h-8 bg-gray-200 text-gray-700 rounded-full hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400'
+                          className='w-8 h-8 bg-gray-200 text-gray-700 rounded-full hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 cursor-pointer'
                         >
                           -
                         </button>
                         <span className='w-8 text-center font-medium'>{item.quantity}</span>
                         <button
                           onClick={() => updateQuantity(item.id, 1)}
-                          className='w-8 h-8 bg-gray-200 text-gray-700 rounded-full hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400'
+                          className='w-8 h-8 bg-gray-200 text-gray-700 rounded-full hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 cursor-pointer'
                         >
                           +
                         </button>
@@ -232,7 +250,7 @@ const WaiterDashBoard = () => {
                         </p>
                         <button
                           onClick={() => removeFromCart(item.id)}
-                          className='text-red-600 hover:text-red-800 text-sm'
+                          className='text-red-600 hover:text-red-800 text-sm cursor-pointer'
                         >
                           Remove
                         </button>
@@ -252,7 +270,7 @@ const WaiterDashBoard = () => {
                   <button
                     onClick={handleSaveAndPrint}
                     disabled={!selectedTable}
-                    className='w-full bg-green-600 text-white py-3 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed'
+                    className='w-full bg-green-600 text-white py-3 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer'
                   >
                     Save & Print Receipt
                   </button>

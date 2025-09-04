@@ -8,6 +8,8 @@ import store from "./store";
 import WaiterDashBoard from "./pages/user/WaiterDashBoard";
 import UserLayout from "./pages/user/UserLayout";
 import TableLogs from "./pages/user/TableLogs";
+import { useEffect } from "react";
+import { initLocalStorageWithUser } from "./util/auth-util";
 
 function App() {
   const router = createBrowserRouter([
@@ -22,6 +24,9 @@ function App() {
       ],
     },
   ]);
+  useEffect(()=>{
+    initLocalStorageWithUser();
+  }, [])
   return (
     <Provider store={store}>
       <RouterProvider router={router}></RouterProvider>;

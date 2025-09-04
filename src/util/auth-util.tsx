@@ -7,7 +7,12 @@ import { UserModel } from "../models/UserModel";
 export function getAllUsers(): UserModel[] {
   return JSON.parse(localStorage.getItem("users") ?? "[]");
 }
-
+export function initLocalStorageWithUser() {
+  if (getAllUsers().length === 0) {
+    localStorage.users =
+      '[{"uid":"1","username":"admin","password":"admin123","fullname":"Bhautik Navdariya","isAdmin":true},{"uid":"2","username":"user","password":"user123","fullname":"John Doe","isAdmin":false}]';
+  }
+}
 // export function signUpUser(user: UserModel): boolean {
 //   const users = getAllUsers();
 //   if (users.some((u) => u.email == user.email)) {
@@ -26,12 +31,11 @@ export function setUserLogin(userData: UserModel): void {
 
 export function loginUser(user: Partial<UserModel>): [boolean, UserModel | null] {
   const users = getAllUsers();
-  
 
   const index = users.findIndex((u) => {
     return u.username == user.username && u.password == user.password;
   });
-  
+
   if (index > -1) {
     setUserLogin(users[index]);
     return [true, users[index]];

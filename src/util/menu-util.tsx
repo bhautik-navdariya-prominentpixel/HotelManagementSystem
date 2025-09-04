@@ -6,14 +6,25 @@ export function getAllMenu(): MenuModel[] {
 
 export function addMenu(menu: MenuModel) {
   const allMenu = getAllMenu();
-  if (!allMenu.some((lcoalMenu) => lcoalMenu.name == menu.name)) {
-    allMenu.push({ ...menu, id: Math.random().toString() });
+  if (
+    !allMenu.some(
+      (lcoalMenu) => lcoalMenu.name.trim().toLowerCase() == menu.name.trim().toLocaleLowerCase()
+    )
+  ) {
+    allMenu.push({ ...menu, id: Math.random().toString(), name: menu.name.trim() });
     localStorage.setItem(KEY, JSON.stringify(allMenu));
   }
 }
 
 export function updateMenu(menu: MenuModel) {
   const allMenu = getAllMenu();
+  if (
+    allMenu.some(
+      (lcoalMenu) => lcoalMenu.name.trim().toLowerCase() == menu.name.trim().toLocaleLowerCase()
+    )
+  ) {
+    return;
+  }
   const index = allMenu.findIndex((m) => m.id === menu.id);
   if (index > -1) {
     allMenu[index] = menu;
