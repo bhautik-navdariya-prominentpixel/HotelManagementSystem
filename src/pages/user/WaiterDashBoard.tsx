@@ -1,70 +1,91 @@
-import { useEffect, useState } from "react";
+import { useState, type ChangeEvent } from "react";
 import { getAllMenu } from "../../util/menu-util";
 import type { MenuModel } from "../../models/MenuModel";
 import { useSelector } from "react-redux";
 import type { StoreType } from "../../store";
-import type { CartModel } from "../../models/CartModel";
 import { getCartOfTable, saveOrder } from "../../util/order-util";
 import { OrderModel } from "../../models/OrderModel";
+import type { TableCartModel } from "../../models/TableCartModel";
+
+const tables: TableCartModel[] = Array.from({ length: 10 }, (_, i) => ({
+  id: `T${String(i + 1).padStart(2, "0")}`,
+  name: `Table ${String(i + 1).padStart(2, "0")}`,
+  cart: getCartOfTable(`Table ${String(i + 1).padStart(2, "0")}`),
+}));
 
 const WaiterDashBoard = () => {
-  const [selectedTable, setSelectedTable] = useState("");
+  const [selectedTable, setSelectedTable] = useState<TableCartModel[]>(tables);
+  const [selectedTableIndex, setSelectedTableIndex] = useState<number>(-1);
   const [searchTerm, setSearchTerm] = useState("");
-  const [cart, setCart] = useState<CartModel[]>([]);
+  // const [cart, setCart] = useState<CartModel[]>([]);
   const user = useSelector((store: StoreType) => store.auth.user);
-  useEffect(()=>{
-    setCart(getCartOfTable(selectedTable))
-  }, [selectedTable])
- 
+
+  // useEffect(() => {
+  //   setCart(getCartOfTable(selectedTable));
+  // }, [selectedTable]);
+
   const filteredMenus = getAllMenu().filter((menu) =>
     menu.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
-  const tables = Array.from({ length: 10 }, (_, i) => ({
-    id: `T${String(i + 1).padStart(2, "0")}`,
-    name: `Table ${String(i + 1).padStart(2, "0")}`,
-  }));
 
   const addToCart = (menu: MenuModel) => {
-    const existingItem = cart.find((item) => item.id === menu.id);
+    const existingItem = selectedTable[selectedTableIndex].cart.find((item) => item.id === menu.id);
     if (existingItem) {
-      setCart((prev) =>
-        prev.map((item) => (item.id === menu.id ? { ...item, quantity: item.quantity + 1 } : item))
-      );
+      selectedTable[selectedTableIndex].cart = selectedTable[selectedTableIndex].cart.map((item) => (item.id === menu.id ? { ...item, quantity: item.quantity + 1 } : item))
+      setSelectedTable([...selectedTable]);
     } else {
-      setCart((prev) => [...prev, { ...menu, quantity: 1 }]);
+      selectedTable[selectedTableIndex].cart = [...selectedTable[selectedTableIndex].cart, { ...menu, quantity: 1 }]
+      // setCart((prev) => [...prev, { ...menu, quantity: 1 }]);
+      setSelectedTable([...selectedTable])
     }
   };
 
   const updateQuantity = (menuId: string, change: number) => {
-    setCart((prev: CartModel[]) => {
-      const index = prev.findIndex((item) => item.id === menuId);
-      if (index > -1) {
-        prev[index].quantity += change;
-        if (prev[index].quantity === 0) {
-          prev.splice(index, 1);
+    const index = selectedTable[selectedTableIndex].cart.findIndex((item) => item.id === menuId);
+    if (index > -1) {
+        selectedTable[selectedTableIndex].cart[index].quantity += change;
+        if (selectedTable[selectedTableIndex].cart[index].quantity === 0) {
+          selectedTable[selectedTableIndex].cart.splice(index, 1);
         }
       }
-      return [...prev];
-    });
+    setSelectedTable([...selectedTable]);
+    // setSelectedTable((prev: CartModel[]) => {
+    //   const index = prev.findIndex((item) => item.id === menuId);
+    //   if (index > -1) {
+    //     prev[index].quantity += change;
+    //     if (prev[index].quantity === 0) {
+    //       prev.splice(index, 1);
+    //     }
+    //   }
+    //   return [...prev];
+    // });
   };
 
   const removeFromCart = (menuId: string) => {
-    setCart((prev) => prev.filter((item) => item.id !== menuId));
+    selectedTable[selectedTableIndex].cart = selectedTable[selectedTableIndex].cart.filter(
+      (item) => item.id !== menuId
+    );
+    setSelectedTable([...selectedTable]);
   };
 
   const getTotalAmount = () => {
-    return cart.reduce((total, item) => total + item.price * item.quantity, 0);
+    return selectedTable[selectedTableIndex].cart.reduce((total, item) => total + item.price * item.quantity, 0);
   };
 
   const handleSaveAndPrint = () => {
-    if (cart.length === 0 || !selectedTable) {
+    if (!selectedTable) {
       alert("Please select a table and add items to cart");
       return;
     }
 
     const order = {
       ...new OrderModel(),
-      ...{ table: selectedTable, items: cart, total: getTotalAmount(), waiter: user.fullname },
+      ...{
+        table: selectedTable[selectedTableIndex].name,
+        items: selectedTable[selectedTableIndex].cart,
+        total: getTotalAmount(),
+        waiter: user.fullname,
+      },
     };
 
     saveOrder(order);
@@ -78,7 +99,7 @@ const WaiterDashBoard = () => {
       Time: ${new Date().toLocaleTimeString()}
 
       ITEMS:
-      \t${cart
+      \t${selectedTable[selectedTableIndex].cart
         .map(
           (item) => `${item.name} x ${item.quantity} = ${(item.price * item.quantity).toFixed(2)}`
         )
@@ -96,10 +117,20 @@ const WaiterDashBoard = () => {
       printWindow.close();
     }
 
-    setCart([]);
-    setSelectedTable("");
+    // setCart([]);
+    setSelectedTableIndex(-1);
     alert("Order saved and receipt printed!");
   };
+
+  const UpdateSelectedTable = (e: ChangeEvent) => {
+    const target = e.target as HTMLInputElement;
+    const tableName = target.value;
+    let index = tables.findIndex((tbl) => tbl.id === tableName);
+    console.log(index);
+    
+    setSelectedTableIndex(index);
+  };
+
   return (
     <>
       <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8'>
@@ -110,8 +141,8 @@ const WaiterDashBoard = () => {
             <div className='bg-white rounded-lg shadow-md p-6'>
               <h2 className='text-lg font-semibold text-gray-900 mb-4'>Select Table</h2>
               <select
-                value={selectedTable}
-                onChange={(e) => setSelectedTable(e.target.value)}
+                value={selectedTableIndex > -1 ? selectedTable[selectedTableIndex].id : ""}
+                onChange={UpdateSelectedTable}
                 className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
               >
                 <option value=''>Choose a table...</option>
@@ -160,14 +191,17 @@ const WaiterDashBoard = () => {
           {/* Right Side - Cart */}
           <div className='bg-white rounded-lg shadow-md p-6'>
             <h2 className='text-lg font-semibold text-gray-900 mb-4'>
-              Order for {selectedTable || "No Table Selected"}
+              Order for{" "}
+              {selectedTableIndex > -1
+                ? selectedTable[selectedTableIndex].name
+                : "No Table Selected"}
             </h2>
 
-            {cart.length === 0 ? (
+            {(selectedTableIndex === -1 || selectedTable[selectedTableIndex].cart.length === 0) ? (
               <p className='text-gray-500 text-center py-8'>No items in cart</p>
             ) : (
               <div className='space-y-4'>
-                {cart.map((item) => (
+                {selectedTable[selectedTableIndex].cart.map((item) => (
                   <div
                     key={item.id}
                     className='flex items-center justify-between p-3 border border-gray-200 rounded-lg'

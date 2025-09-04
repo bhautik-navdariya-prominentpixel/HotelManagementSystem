@@ -19,24 +19,26 @@ const Header = (props: { type: "ADMIN" | "WAITER" }) => {
             <h1 className='text-xl font-semibold text-gray-900'>
               {props.type === "ADMIN" ? "Admin" : "Waiter"} Dashboard
             </h1>
-            <div>
-              <NavLink
-                to={"/user"}
-                className='mx-2'
-                style={({ isActive }) => (isActive ? { textDecoration: "underline" } : undefined)}
-                end
-              >
-                Home
-              </NavLink>
-              <NavLink
-                to={"/user/log"}
-                className='mx-2'
-                style={({ isActive }) => (isActive ? { textDecoration: "underline" } : undefined)}
-                end
-              >
-                Logs
-              </NavLink>
-            </div>
+            {props.type === "WAITER" && (
+              <div>
+                <NavLink
+                  to={"/user"}
+                  className='mx-2'
+                  style={({ isActive }) => (isActive ? { textDecoration: "underline" } : undefined)}
+                  end
+                >
+                  Home
+                </NavLink>
+                <NavLink
+                  to={"/user/log"}
+                  className='mx-2'
+                  style={({ isActive }) => (isActive ? { textDecoration: "underline" } : undefined)}
+                  end
+                >
+                  Logs
+                </NavLink>
+              </div>
+            )}
             <div className='flex items-center space-x-4'>
               <span className='text-sm text-gray-600'>Welcome, {user.fullname}</span>
               <button
