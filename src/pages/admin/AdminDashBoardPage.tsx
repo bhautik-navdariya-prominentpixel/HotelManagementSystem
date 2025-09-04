@@ -20,8 +20,6 @@ export const AdminDashboard = () => {
     validationSchema: MenuModelValidator,
     onSubmit: (values: MenuModel, { resetForm }: { resetForm: Function }) => {
       if (editingMenu) {
-        console.log(values);
-        
         updateMenu(values);
         setMenus(getAllMenu());
         setEditingMenu(null);

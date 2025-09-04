@@ -6,8 +6,10 @@ export function getAllMenu(): MenuModel[] {
 
 export function addMenu(menu: MenuModel) {
   const allMenu = getAllMenu();
-  allMenu.push(menu);
-  localStorage.setItem(KEY, JSON.stringify(allMenu));
+  if (!allMenu.some((lcoalMenu) => lcoalMenu.name == menu.name)) {
+    allMenu.push({ ...menu, id: Math.random().toString() });
+    localStorage.setItem(KEY, JSON.stringify(allMenu));
+  }
 }
 
 export function updateMenu(menu: MenuModel) {
