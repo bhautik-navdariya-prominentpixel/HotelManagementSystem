@@ -20,7 +20,7 @@ export function updateMenu(menu: MenuModel) {
   const allMenu = getAllMenu();
   if (
     allMenu.some(
-      (lcoalMenu) => lcoalMenu.name.trim().toLowerCase() == menu.name.trim().toLocaleLowerCase()
+      (lcoalMenu) => lcoalMenu.name.trim().toLowerCase() == menu.name.trim().toLocaleLowerCase() && lcoalMenu.id !== menu.id
     )
   ) {
     return;
