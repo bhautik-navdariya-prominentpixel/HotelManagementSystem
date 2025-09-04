@@ -1,7 +1,7 @@
 import { useFormik } from "formik";
 import { useEffect, useState } from "react";
 import { MenuModel, MenuModelValidator } from "../../models/MenuModel";
-import {  useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import type { StoreType } from "../../store";
 import { useNavigate } from "react-router-dom";
 import { addMenu, deleteMenu, getAllMenu, updateMenu } from "../../util/menu-util";
@@ -30,7 +30,6 @@ export const AdminDashboard = () => {
       resetForm();
     },
   });
-
 
   const handleEdit = (menu: MenuModel) => {
     setEditingMenu(menu);
@@ -62,7 +61,7 @@ export const AdminDashboard = () => {
   return (
     <div className='min-h-screen bg-gray-50'>
       {/* Header */}
-      <Header type="ADMIN" />
+      <Header type='ADMIN' />
 
       <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8'>
         {/* Menu Form */}
@@ -193,8 +192,9 @@ export const AdminDashboard = () => {
                           Edit
                         </button>
                         <button
+                          disabled={!!editingMenu}
                           onClick={() => handleDelete(menu.id)}
-                          className='text-red-600 hover:text-red-900 font-medium'
+                          className='text-red-600 hover:text-red-900 font-medium disabled:opacity-50 disabled:cursor-not-allowed'
                         >
                           Delete
                         </button>
